@@ -4,3 +4,10 @@ pages_build_output_dir = "dist"
 
 # Secrets are set via: npx wrangler secret put ANTHROPIC_API_KEY
 # Local dev: use .dev.vars file
+
+# KV Namespace for Rate Limiting
+# Production: Set binding in Cloudflare Dashboard > Pages > decisible > Settings > Functions > KV namespace bindings
+# Local dev: Create KV with `npx wrangler kv namespace create RATE_LIMIT_KV` and paste the id below
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "placeholder-replace-with-real-kv-id"

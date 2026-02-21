@@ -1,41 +1,81 @@
-export async function onRequestPost(context) {
-  const { ANTHROPIC_API_KEY } = context.env;
+const ALLOWED_ORIGIN = 'https://decisible.pages.dev';
+const DAILY_LIMIT = 10; // IP당 하루 최대 요청 수
 
-  // CORS headers — restrict to decisible.pages.dev only
-  const allowedOrigins = ['https://decisible.pages.dev', 'https://decisible.com'];
-  const origin = context.request.headers.get('Origin') || '';
-  const corsOrigin = allowedOrigins.includes(origin) ? origin : 'https://decisible.pages.dev';
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': corsOrigin,
+// CORS 헤더 (오리진 고정)
+function corsHeaders(requestOrigin) {
+  const origin = requestOrigin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : ALLOWED_ORIGIN;
+  return {
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Vary': 'Origin',
   };
+}
 
-  // Block requests not from our domain
-  const referer = context.request.headers.get('Referer') || '';
-  const isAllowedOrigin = allowedOrigins.some(o => origin.startsWith(o));
-  const isAllowedReferer = allowedOrigins.some(o => referer.startsWith(o));
-  if (origin && !isAllowedOrigin && !isAllowedReferer) {
-    return Response.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders });
+// KV 기반 IP Rate Limiter
+async function checkRateLimit(kv, ip) {
+  if (!kv) return { allowed: true, remaining: DAILY_LIMIT }; // KV 없으면 패스 (로컬 개발)
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const key = `ratelimit:${ip}:${today}`;
+
+  const raw = await kv.get(key);
+  const count = raw ? parseInt(raw) : 0;
+
+  if (count >= DAILY_LIMIT) {
+    return { allowed: false, remaining: 0, count };
+  }
+
+  // 카운터 증가, 자정까지 TTL
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setUTCHours(24, 0, 0, 0);
+  const ttl = Math.floor((midnight - now) / 1000);
+
+  await kv.put(key, String(count + 1), { expirationTtl: ttl });
+
+  return { allowed: true, remaining: DAILY_LIMIT - (count + 1), count: count + 1 };
+}
+
+export async function onRequestPost(context) {
+  const { ANTHROPIC_API_KEY, RATE_LIMIT_KV } = context.env;
+  const headers = corsHeaders(context.request.headers.get('Origin'));
+
+  // IP 추출 (Cloudflare는 CF-Connecting-IP 헤더 제공)
+  const ip =
+    context.request.headers.get('CF-Connecting-IP') ||
+    context.request.headers.get('X-Forwarded-For')?.split(',')[0].trim() ||
+    'unknown';
+
+  // Rate Limit 체크
+  const rateLimit = await checkRateLimit(RATE_LIMIT_KV, ip);
+  if (!rateLimit.allowed) {
+    return Response.json(
+      {
+        error: 'Daily limit reached',
+        message: `You've reached the daily limit of ${DAILY_LIMIT} analyses. Try again tomorrow.`,
+      },
+      { status: 429, headers }
+    );
   }
 
   if (!ANTHROPIC_API_KEY) {
-    return Response.json({ error: 'API key not configured' }, { status: 500, headers: corsHeaders });
+    return Response.json({ error: 'API key not configured' }, { status: 500, headers });
   }
 
   let body;
   try {
     body = await context.request.json();
   } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: corsHeaders });
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers });
   }
 
   const { product, category, price, market, context: extraContext } = body;
 
   if (!product || !category || !price) {
-    return Response.json({ error: 'Missing required fields: product, category, price' }, { status: 400, headers: corsHeaders });
+    return Response.json(
+      { error: 'Missing required fields: product, category, price' },
+      { status: 400, headers }
+    );
   }
 
   const systemPrompt = `You are a senior Amazon Merchandising Director with 10 years of product launch experience. You have launched hundreds of products across consumer electronics, accessories, outdoor gear, and lifestyle categories. You think like a product strategist: you weigh market opportunity against execution risk, and you are NOT afraid to say NO.
@@ -82,6 +122,9 @@ Market: ${market || 'US'}
 ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -90,33 +133,49 @@ ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1200,
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1500,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }]
-      })
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errText = await response.text();
-      return Response.json({ error: `Anthropic API error: ${response.status}`, detail: errText }, { status: 502, headers: corsHeaders });
+      return Response.json(
+        { error: `Analysis service error (${response.status}). Please try again.` },
+        { status: 502, headers }
+      );
     }
 
     const data = await response.json();
-    return Response.json({ result: data.content[0].text }, { headers: corsHeaders });
-
+    return Response.json(
+      {
+        result: data.content[0].text,
+        remaining: rateLimit.remaining,
+      },
+      { headers }
+    );
   } catch (err) {
-    return Response.json({ error: 'Failed to call AI API', detail: String(err) }, { status: 500, headers: corsHeaders });
+    if (err.name === 'AbortError') {
+      return Response.json(
+        { error: 'Analysis timed out. Please try again.' },
+        { status: 504, headers }
+      );
+    }
+    return Response.json(
+      { error: 'Failed to run analysis. Please try again.' },
+      { status: 500, headers }
+    );
   }
 }
 
-// Handle CORS preflight
-export async function onRequestOptions() {
+// CORS preflight
+export async function onRequestOptions(context) {
   return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
+    headers: corsHeaders(context.request.headers.get('Origin')),
   });
 }
