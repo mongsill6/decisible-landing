@@ -1,0 +1,244 @@
+import './index.css';
+import WaitlistForm from './WaitlistForm';
+
+const painPoints = [
+  {
+    icon: '📊',
+    title: 'Data Overload',
+    desc: 'Helium10 gives you numbers. Nobody tells you what to DO with them.',
+  },
+  {
+    icon: '🤔',
+    title: 'Decision Paralysis',
+    desc: '3 product ideas. No idea which one to bet $10K on.',
+  },
+  {
+    icon: '💸',
+    title: 'Expensive Mistakes',
+    desc: 'Wrong launch = months lost + thousands in sunk inventory costs.',
+  },
+];
+
+const steps = [
+  {
+    num: '01',
+    icon: '📝',
+    title: 'Input',
+    desc: 'Paste your product idea, niche, or competitor ASIN',
+  },
+  {
+    num: '02',
+    icon: '🤖',
+    title: 'Analyze',
+    desc: 'AI cross-references demand, competition, margins & trends',
+  },
+  {
+    num: '03',
+    icon: '✅',
+    title: 'Decide',
+    desc: 'Get GO / NO-GO with full reasoning + 90-day action plan',
+  },
+];
+
+const testimonials = [
+  {
+    text: 'Finally, a tool that thinks like an experienced MD.',
+    name: 'Sarah K.',
+    role: 'Amazon FBA Seller, 7-figure',
+  },
+  {
+    text: 'Saved me from launching a product that would\'ve killed my margins.',
+    name: 'Marcus T.',
+    role: 'Private Label Brand Owner',
+  },
+  {
+    text: 'GO/NO-GO in 60 seconds. Game changer.',
+    name: 'Jenny L.',
+    role: 'Amazon Entrepreneur',
+  },
+];
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
+
+      {/* Nav */}
+      <nav className="fixed top-0 w-full z-50 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="text-xl font-black tracking-tight">
+            Decisi<span className="text-emerald-500">ble</span>
+          </div>
+          <a
+            href="#waitlist"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg transition"
+          >
+            Join Waitlist
+          </a>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="pt-32 pb-28 px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-semibold fade-in-up">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            Early Access — Be Among the First 500 Sellers
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white leading-[1.05] mb-6 fade-in-up delay-1">
+            Stop Guessing.
+            <br />
+            <span className="text-emerald-500">Start Knowing.</span>
+          </h1>
+
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 fade-in-up delay-2">
+            AI-powered product launch decisions for Amazon sellers —
+            backed by 10-year MD expertise.
+          </p>
+
+          <div className="fade-in-up delay-3">
+            <WaitlistForm variant="hero" />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-600 fade-in-up delay-4">
+            Free early access · No credit card required · Launch notifications only
+          </p>
+        </div>
+      </section>
+
+      {/* Problem */}
+      <section className="py-24 px-6 bg-slate-950/60">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">The Problem</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+              The Problem with Amazon Tools
+            </h2>
+            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+              You're drowning in dashboards — but still launching blind.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {painPoints.map((p) => (
+              <div
+                key={p.title}
+                className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 hover:border-emerald-500/40 transition-all duration-300"
+              >
+                <div className="text-4xl mb-4">{p.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-2">{p.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Solution */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">The Solution</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
+              Meet <span className="text-emerald-500">Decisible</span>
+            </h2>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+              Decisible analyzes your product idea like a seasoned 10-year Amazon MD —
+              and delivers a clear{' '}
+              <span className="text-emerald-400 font-bold">GO</span>
+              {' '}or{' '}
+              <span className="text-red-400 font-bold">NO-GO</span>.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {steps.map((s) => (
+              <div
+                key={s.num}
+                className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 text-center hover:border-emerald-500/40 transition-all duration-300"
+              >
+                <div className="text-xs font-black text-emerald-500 mb-2 tracking-widest">{s.num}</div>
+                <div className="text-4xl mb-4">{s.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-2">{s.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* GO / NO-GO visual */}
+          <div className="mt-12 flex items-center justify-center gap-4 flex-wrap">
+            <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl px-8 py-5">
+              <span className="text-3xl font-black text-emerald-400">GO</span>
+              <span className="text-slate-400 text-sm">Launch with confidence</span>
+            </div>
+            <span className="text-slate-600 text-2xl font-bold">or</span>
+            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-2xl px-8 py-5">
+              <span className="text-3xl font-black text-red-400">NO-GO</span>
+              <span className="text-slate-400 text-sm">Save your capital</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="py-24 px-6 bg-slate-950/60">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">Social Proof</p>
+          <h2 className="text-3xl font-black text-white mb-3">
+            Join 500+ Amazon Sellers
+          </h2>
+          <p className="text-slate-400 mb-12 text-lg">
+            Making smarter launch decisions — not expensive guesses.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div key={t.name} className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 text-left">
+                <div className="flex mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-yellow-400">★</span>
+                  ))}
+                </div>
+                <p className="text-slate-300 mb-5 leading-relaxed">"{t.text}"</p>
+                <div>
+                  <p className="text-white font-semibold text-sm">{t.name}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{t.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Waitlist */}
+      <section id="waitlist" className="py-24 px-6">
+        <div className="max-w-xl mx-auto text-center">
+          <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">Early Access</p>
+          <h2 className="text-4xl font-black text-white mb-4">
+            Ready to Launch <span className="text-emerald-500">Smarter</span>?
+          </h2>
+          <p className="text-slate-400 mb-10 text-lg">
+            Free beta for the first 500 members. No credit card needed.
+          </p>
+          <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-8">
+            <WaitlistForm variant="bottom" />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-slate-800">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+          <div className="font-black text-white text-lg">
+            Decisi<span className="text-emerald-500">ble</span>
+          </div>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-slate-300 transition">Privacy Policy</a>
+            <a href="mailto:hello@decisible.com" className="hover:text-slate-300 transition">hello@decisible.com</a>
+          </div>
+          <p>© 2026 Decisible. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
