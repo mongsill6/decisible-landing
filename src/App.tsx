@@ -1,40 +1,58 @@
 import './index.css';
 import WaitlistForm from './WaitlistForm';
+import { BarChart3, GitFork, TrendingDown, FileText, ScanSearch, CheckCircle2, type LucideIcon } from 'lucide-react';
 
-const painPoints = [
+interface PainPoint {
+  Icon: LucideIcon;
+  iconColor: string;
+  title: string;
+  desc: string;
+}
+
+interface Step {
+  num: string;
+  Icon: LucideIcon;
+  title: string;
+  desc: string;
+}
+
+const painPoints: PainPoint[] = [
   {
-    icon: '📊',
+    Icon: BarChart3,
+    iconColor: '#10B981',
     title: 'Data Overload',
     desc: 'Helium10 gives you numbers. Nobody tells you what to DO with them.',
   },
   {
-    icon: '🤔',
+    Icon: GitFork,
+    iconColor: '#10B981',
     title: 'Decision Paralysis',
     desc: '3 product ideas. No idea which one to bet $10K on.',
   },
   {
-    icon: '💸',
+    Icon: TrendingDown,
+    iconColor: '#EF4444',
     title: 'Expensive Mistakes',
     desc: 'Wrong launch = months lost + thousands in sunk inventory costs.',
   },
 ];
 
-const steps = [
+const steps: Step[] = [
   {
     num: '01',
-    icon: '📝',
+    Icon: FileText,
     title: 'Input',
     desc: 'Paste your product idea, niche, or competitor ASIN',
   },
   {
     num: '02',
-    icon: '🤖',
+    Icon: ScanSearch,
     title: 'Analyze',
     desc: 'AI cross-references demand, competition, margins & trends',
   },
   {
     num: '03',
-    icon: '✅',
+    Icon: CheckCircle2,
     title: 'Decide',
     desc: 'Get GO / NO-GO with full reasoning + 90-day action plan',
   },
@@ -125,7 +143,9 @@ export default function App() {
                 key={p.title}
                 className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 hover:border-emerald-500/40 transition-all duration-300"
               >
-                <div className="text-4xl mb-4">{p.icon}</div>
+                <div className="mb-4">
+                  <p.Icon size={32} color={p.iconColor} />
+                </div>
                 <h3 className="text-xl font-bold text-white mb-2">{p.title}</h3>
                 <p className="text-slate-400 leading-relaxed">{p.desc}</p>
               </div>
@@ -158,7 +178,9 @@ export default function App() {
                 className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 text-center hover:border-emerald-500/40 transition-all duration-300"
               >
                 <div className="text-xs font-black text-emerald-500 mb-2 tracking-widest">{s.num}</div>
-                <div className="text-4xl mb-4">{s.icon}</div>
+                <div className="flex justify-center mb-4">
+                  <s.Icon size={32} color="#10B981" />
+                </div>
                 <h3 className="text-xl font-bold text-white mb-2">{s.title}</h3>
                 <p className="text-slate-400 text-sm leading-relaxed">{s.desc}</p>
               </div>
