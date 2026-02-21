@@ -99,10 +99,18 @@ export default function Analyze() {
           <Link to="/" className="text-xl font-black tracking-tight">
             Decisi<span className="text-emerald-500">ble</span>
           </Link>
-          <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition">
-            <ChevronLeft size={16} />
-            Back to Home
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition">
+              <ChevronLeft size={16} />
+              Home
+            </Link>
+            <a
+              href="/#waitlist"
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg transition"
+            >
+              Join Waitlist
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -178,10 +186,10 @@ export default function Analyze() {
                 onChange={handleChange}
                 className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
               >
-                <option value="US">🇺🇸 US (Amazon.com)</option>
-                <option value="EU">🇪🇺 EU (Amazon.de / .fr / .it)</option>
-                <option value="UK">🇬🇧 UK (Amazon.co.uk)</option>
-                <option value="Global">🌍 Global (Multi-market)</option>
+                <option value="US">US — Amazon.com</option>
+                <option value="EU">EU — Amazon.de / .fr / .it</option>
+                <option value="UK">UK — Amazon.co.uk</option>
+                <option value="Global">Global — Multi-market</option>
               </select>
             </div>
 
