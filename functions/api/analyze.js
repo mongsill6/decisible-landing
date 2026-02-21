@@ -1,12 +1,25 @@
 export async function onRequestPost(context) {
   const { ANTHROPIC_API_KEY } = context.env;
 
-  // CORS headers
+  // CORS headers — restrict to decisible.pages.dev only
+  const allowedOrigins = ['https://decisible.pages.dev', 'https://decisible.com'];
+  const origin = context.request.headers.get('Origin') || '';
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : 'https://decisible.pages.dev';
+
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': corsOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin',
   };
+
+  // Block requests not from our domain
+  const referer = context.request.headers.get('Referer') || '';
+  const isAllowedOrigin = allowedOrigins.some(o => origin.startsWith(o));
+  const isAllowedReferer = allowedOrigins.some(o => referer.startsWith(o));
+  if (origin && !isAllowedOrigin && !isAllowedReferer) {
+    return Response.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders });
+  }
 
   if (!ANTHROPIC_API_KEY) {
     return Response.json({ error: 'API key not configured' }, { status: 500, headers: corsHeaders });
@@ -78,7 +91,7 @@ ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 1500,
+        max_tokens: 1200,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }]
       })
