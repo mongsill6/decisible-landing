@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Loader2, ArrowRight, ChevronLeft } from 'lucide-react';
+import { Loader2, ArrowRight, ChevronLeft, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface FormData {
@@ -43,6 +43,13 @@ const verdictStyle: Record<NonNullable<VerdictType>, { bg: string; border: strin
   },
 };
 
+// localStorage helpers
+const getUsageCount = () => parseInt(localStorage.getItem('decisible_usage_count') || '0');
+const incrementUsageCount = () => {
+  localStorage.setItem('decisible_usage_count', String(getUsageCount() + 1));
+};
+const hasSubmittedEmail = () => !!localStorage.getItem('decisible_email_submitted');
+
 export default function Analyze() {
   const [form, setForm] = useState<FormData>({
     product: '',
@@ -56,12 +63,16 @@ export default function Analyze() {
   const [error, setError] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<VerdictType>(null);
 
+  // Email gate state
+  const [showEmailGate, setShowEmailGate] = useState(false);
+  const [gateEmail, setGateEmail] = useState('');
+  const [gateSubmitting, setGateSubmitting] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const runAnalysis = async () => {
     setLoading(true);
     setResult(null);
     setError(null);
@@ -81,6 +92,7 @@ export default function Analyze() {
 
       setResult(data.result);
       setVerdict(detectVerdict(data.result));
+      incrementUsageCount();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
     } finally {
@@ -88,13 +100,118 @@ export default function Analyze() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Check if email gate should appear (3rd+ attempt, email not yet submitted)
+    const count = getUsageCount();
+    if (count >= 2 && !hasSubmittedEmail()) {
+      setShowEmailGate(true);
+      return;
+    }
+
+    await runAnalysis();
+  };
+
+  const handleGateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateSubmitting(true);
+
+    try {
+      await fetch('https://formsubmit.co/ajax/hdj0611@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: gateEmail,
+          source: 'decisible-email-gate',
+          _subject: 'New Decisible waitlist signup (email gate)',
+        }),
+      });
+    } catch {
+      // 실패해도 계속 진행
+    }
+
+    localStorage.setItem('decisible_email_submitted', '1');
+    setShowEmailGate(false);
+    setGateSubmitting(false);
+
+    // 이메일 제출 후 분석 계속 진행
+    await runAnalysis();
+  };
+
   const isValid = form.product.trim() && form.category.trim() && form.price.trim();
   const style = verdict ? verdictStyle[verdict] : null;
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
+
+      {/* Email Gate Modal */}
+      {showEmailGate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl">
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center">
+                <Mail size={24} className="text-emerald-400" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-black text-white text-center mb-2">
+              Unlock Unlimited Analyses
+            </h2>
+            <p className="text-slate-400 text-center text-sm mb-6">
+              Join 500+ Amazon sellers making smarter decisions
+            </p>
+
+            {/* Usage notice */}
+            <div className="bg-slate-800/60 border border-slate-600 rounded-xl px-4 py-3 mb-6 text-center">
+              <p className="text-slate-300 text-sm">
+                You've used your <span className="text-emerald-400 font-bold">2 free analyses</span>
+              </p>
+              <p className="text-slate-500 text-xs mt-1">Enter your email to continue — it's free</p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleGateSubmit} className="flex flex-col gap-4">
+              <input
+                type="email"
+                value={gateEmail}
+                onChange={e => setGateEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+              />
+              <button
+                type="submit"
+                disabled={gateSubmitting || !gateEmail.trim()}
+                className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition"
+              >
+                {gateSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Get Access →
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="text-slate-600 text-xs text-center mt-4">
+              No spam. Unsubscribe anytime.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
+      <nav className="fixed top-0 w-full z-40 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-black tracking-tight">
             Decisi<span className="text-emerald-500">ble</span>
