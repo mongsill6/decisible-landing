@@ -1,4 +1,5 @@
 import './index.css';
+import { Link } from 'react-router-dom';
 import WaitlistForm from './WaitlistForm';
 import { BarChart3, GitFork, TrendingDown, FileText, ScanSearch, CheckCircle2, type LucideIcon } from 'lucide-react';
 
@@ -86,12 +87,20 @@ export default function App() {
           <div className="text-xl font-black tracking-tight">
             Decisi<span className="text-emerald-500">ble</span>
           </div>
-          <a
-            href="#waitlist"
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg transition"
-          >
-            Join Waitlist
-          </a>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/analyze"
+              className="px-4 py-2 border border-emerald-500/50 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 text-sm font-bold rounded-lg transition"
+            >
+              Try Demo →
+            </Link>
+            <a
+              href="#waitlist"
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg transition"
+            >
+              Join Waitlist
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -121,6 +130,15 @@ export default function App() {
           <p className="mt-5 text-sm text-slate-600 fade-in-up delay-4">
             Free early access · No credit card required · Launch notifications only
           </p>
+
+          <div className="mt-8 fade-in-up delay-4">
+            <Link
+              to="/analyze"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-emerald-500/40 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 font-semibold rounded-xl transition text-sm"
+            >
+              ✨ Try a Free Analysis Now →
+            </Link>
+          </div>
         </div>
       </section>
 

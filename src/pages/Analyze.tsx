@@ -1,0 +1,273 @@
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Loader2, ArrowRight, ChevronLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+interface FormData {
+  product: string;
+  category: string;
+  price: string;
+  market: string;
+  context: string;
+}
+
+type VerdictType = 'GO' | 'NO-GO' | 'CONDITIONAL' | null;
+
+function detectVerdict(text: string): VerdictType {
+  const upper = text.toUpperCase();
+  if (upper.includes('VERDICT: GO ✅') || upper.includes('VERDICT: GO\n') || (upper.includes('## VERDICT') && upper.includes('GO ✅'))) return 'GO';
+  if (upper.includes('NO-GO ❌') || upper.includes('NO-GO\n')) return 'NO-GO';
+  if (upper.includes('CONDITIONAL GO ⚠️') || upper.includes('CONDITIONAL GO')) return 'CONDITIONAL';
+  return null;
+}
+
+const verdictStyle: Record<NonNullable<VerdictType>, { bg: string; border: string; badge: string; label: string }> = {
+  GO: {
+    bg: 'bg-emerald-950/60',
+    border: 'border-emerald-500/40',
+    badge: 'bg-emerald-500 text-white',
+    label: 'GO ✅',
+  },
+  'NO-GO': {
+    bg: 'bg-red-950/60',
+    border: 'border-red-500/40',
+    badge: 'bg-red-500 text-white',
+    label: 'NO-GO ❌',
+  },
+  CONDITIONAL: {
+    bg: 'bg-yellow-950/60',
+    border: 'border-yellow-500/40',
+    badge: 'bg-yellow-400 text-black',
+    label: 'CONDITIONAL GO ⚠️',
+  },
+};
+
+export default function Analyze() {
+  const [form, setForm] = useState<FormData>({
+    product: '',
+    category: '',
+    price: '',
+    market: 'US',
+    context: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [verdict, setVerdict] = useState<VerdictType>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+    setError(null);
+    setVerdict(null);
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Analysis failed');
+      }
+
+      setResult(data.result);
+      setVerdict(detectVerdict(data.result));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isValid = form.product.trim() && form.category.trim() && form.price.trim();
+  const style = verdict ? verdictStyle[verdict] : null;
+
+  return (
+    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
+      {/* Nav */}
+      <nav className="fixed top-0 w-full z-50 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="text-xl font-black tracking-tight">
+            Decisi<span className="text-emerald-500">ble</span>
+          </Link>
+          <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition">
+            <ChevronLeft size={16} />
+            Back to Home
+          </Link>
+        </div>
+      </nav>
+
+      <div className="max-w-3xl mx-auto px-6 pt-32 pb-20">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-semibold">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            AI Launch Analyzer — Powered by Claude
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-white mb-4">
+            Should You <span className="text-emerald-500">Launch It?</span>
+          </h1>
+          <p className="text-slate-400 text-lg">
+            Get a GO / NO-GO decision in 30 seconds — backed by 10-year MD expertise.
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="bg-[#1E293B] border border-slate-700 rounded-2xl p-8 mb-8">
+          <div className="grid gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Product Idea <span className="text-emerald-400">*</span>
+              </label>
+              <input
+                name="product"
+                value={form.product}
+                onChange={handleChange}
+                placeholder="e.g. Stainless steel insulated water bottle with straw lid"
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                required
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Category <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  placeholder="e.g. Kitchen & Dining"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Target Price ($) <span className="text-emerald-400">*</span>
+                </label>
+                <input
+                  name="price"
+                  value={form.price}
+                  onChange={handleChange}
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  placeholder="e.g. 25"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Market</label>
+              <select
+                name="market"
+                value={form.market}
+                onChange={handleChange}
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+              >
+                <option value="US">🇺🇸 US (Amazon.com)</option>
+                <option value="EU">🇪🇺 EU (Amazon.de / .fr / .it)</option>
+                <option value="UK">🇬🇧 UK (Amazon.co.uk)</option>
+                <option value="Global">🌍 Global (Multi-market)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Additional Context <span className="text-slate-500 font-normal">(optional)</span>
+              </label>
+              <textarea
+                name="context"
+                value={form.context}
+                onChange={handleChange}
+                rows={3}
+                placeholder="e.g. Competitor ASIN: B08XYZ, avg BSR 12,000, my COGS is ~$7..."
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={!isValid || loading}
+              className="flex items-center justify-center gap-3 w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition text-lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Analyzing with AI...
+                </>
+              ) : (
+                <>
+                  Analyze Now
+                  <ArrowRight size={20} />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-950/60 border border-red-500/40 rounded-2xl p-6 mb-8 text-red-300">
+            <p className="font-semibold mb-1">Analysis Failed</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Result */}
+        {result && (
+          <div className={`rounded-2xl border p-8 ${style ? `${style.bg} ${style.border}` : 'bg-slate-800/60 border-slate-700'}`}>
+            {/* Verdict Badge */}
+            {verdict && style && (
+              <div className="flex items-center gap-3 mb-6">
+                <span className={`px-4 py-2 rounded-full text-sm font-black tracking-wider ${style.badge}`}>
+                  {style.label}
+                </span>
+                <span className="text-slate-400 text-sm">AI Analysis Complete</span>
+              </div>
+            )}
+
+            {/* Markdown Result */}
+            <div className="prose prose-invert prose-emerald max-w-none
+              prose-h2:text-white prose-h2:font-black prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3
+              prose-h3:text-emerald-400 prose-h3:font-bold prose-h3:text-base
+              prose-strong:text-white
+              prose-li:text-slate-300 prose-li:leading-relaxed
+              prose-p:text-slate-300 prose-p:leading-relaxed
+              prose-hr:border-slate-600">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {result}
+              </ReactMarkdown>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-8 pt-6 border-t border-slate-700/50 flex flex-col sm:flex-row items-center gap-4">
+              <p className="text-slate-400 text-sm flex-1">
+                Want unlimited analyses + PDF export + competitor comparison?
+              </p>
+              <Link
+                to="/#waitlist"
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition text-sm whitespace-nowrap"
+              >
+                Join Waitlist for Full Access
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
