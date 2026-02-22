@@ -59,21 +59,21 @@ const steps: Step[] = [
   },
 ];
 
-const testimonials = [
+const sellerNeeds = [
   {
-    text: 'Finally, a tool that thinks like an experienced MD.',
-    name: 'Sarah K.',
-    role: 'Amazon FBA Seller, 7-figure',
+    emoji: '🎯',
+    title: 'Clear Decision, Not More Data',
+    desc: 'Sellers don\'t need another dashboard. They need someone to say GO or NO-GO — with reasoning.',
   },
   {
-    text: 'Saved me from launching a product that would\'ve killed my margins.',
-    name: 'Marcus T.',
-    role: 'Private Label Brand Owner',
+    emoji: '💸',
+    title: 'Protect Capital Before Launch',
+    desc: 'The average failed FBA launch costs $8K–$25K in sunk inventory. One good decision pays for years of subscriptions.',
   },
   {
-    text: 'GO/NO-GO in 60 seconds. Game changer.',
-    name: 'Jenny L.',
-    role: 'Amazon Entrepreneur',
+    emoji: '⚡',
+    title: 'Speed Up the Research Phase',
+    desc: 'Manual product research takes 10–20 hours per product. Decisible compresses that into 30 seconds.',
   },
 ];
 
@@ -223,27 +223,20 @@ export default function App() {
       {/* Social Proof */}
       <section className="py-24 px-6 bg-slate-950/60">
         <div className="max-w-5xl mx-auto text-center">
-          <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">Social Proof</p>
+          <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">Why Decisible</p>
           <h2 className="text-3xl font-black text-white mb-3">
-            Join 500+ Amazon Sellers
+            Built for Amazon Sellers Who Think Before They Launch
           </h2>
           <p className="text-slate-400 mb-12 text-lg">
-            Making smarter launch decisions — not expensive guesses.
+            Stop guessing. Start making decisions backed by data.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 text-left">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="text-yellow-400">★</span>
-                  ))}
-                </div>
-                <p className="text-slate-300 mb-5 leading-relaxed">"{t.text}"</p>
-                <div>
-                  <p className="text-white font-semibold text-sm">{t.name}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">{t.role}</p>
-                </div>
+            {sellerNeeds.map((s) => (
+              <div key={s.title} className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 text-left">
+                <div className="text-4xl mb-4">{s.emoji}</div>
+                <h3 className="text-white font-bold text-lg mb-2">{s.title}</h3>
+                <p className="text-slate-400 leading-relaxed text-sm">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -332,8 +325,8 @@ export default function App() {
             Decisi<span className="text-emerald-500">ble</span>
           </div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-slate-300 transition">Privacy Policy</a>
-            <a href="mailto:hello@decisible.com" className="hover:text-slate-300 transition">hello@decisible.com</a>
+            <a href="https://decisible.pages.dev" className="hover:text-slate-300 transition">decisible.pages.dev</a>
+            <a href="mailto:hdj0611@gmail.com" className="hover:text-slate-300 transition">hdj0611@gmail.com</a>
           </div>
           <p>© 2026 Decisible. All rights reserved.</p>
         </div>
