@@ -84,9 +84,9 @@ export default function App() {
       {/* Nav */}
       <nav className="fixed top-0 w-full z-50 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-xl font-black tracking-tight">
+          <Link to="/" className="text-xl font-black tracking-tight hover:opacity-80 transition">
             Decisi<span className="text-emerald-500">ble</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-3">
             <Link
               to="/analyze"
@@ -321,9 +321,9 @@ export default function App() {
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <div className="font-black text-white text-lg">
+          <Link to="/" className="font-black text-white text-lg hover:opacity-80 transition">
             Decisi<span className="text-emerald-500">ble</span>
-          </div>
+          </Link>
           <div className="flex gap-6">
             <a href="https://decisible.pages.dev" className="hover:text-slate-300 transition">decisible.pages.dev</a>
             <a href="mailto:hdj0611@gmail.com" className="hover:text-slate-300 transition">hdj0611@gmail.com</a>
