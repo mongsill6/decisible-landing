@@ -133,7 +133,7 @@ ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-latest',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 1500,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
