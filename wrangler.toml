@@ -10,4 +10,4 @@ pages_build_output_dir = "dist"
 # Local dev: Create KV with `npx wrangler kv namespace create RATE_LIMIT_KV` and paste the id below
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "placeholder-replace-with-real-kv-id"
+id = "d435ffdd8b5845c18f0130bf5644bff5"
