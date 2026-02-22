@@ -14,7 +14,7 @@ interface FormData {
 
 type VerdictType = 'GO' | 'NO-GO' | 'CONDITIONAL' | null;
 
-// ─── Parsers ───────────────────────────────────────────────────────────────
+// ── Parsers ──────────────────────────────────────────────────────────────
 
 function detectVerdict(text: string): VerdictType {
   const upper = text.toUpperCase();
@@ -24,23 +24,14 @@ function detectVerdict(text: string): VerdictType {
   return null;
 }
 
-interface DimensionScore {
-  label: string;
-  score: number;
-}
+interface DimensionScore { label: string; score: number; }
 
 function parseDimensionScores(text: string): DimensionScore[] {
-  const dimensions = [
-    'Market Demand',
-    'Competition',
-    'Margin Viability',
-    'Differentiation',
-    'Launch Risk',
-  ];
-  return dimensions.flatMap(label => {
+  return [
+    'Market Demand', 'Competition', 'Margin Viability', 'Differentiation', 'Launch Risk',
+  ].flatMap(label => {
     const match = new RegExp(`${label}[:\\s]+([0-9]+)\\s*/\\s*10`, 'i').exec(text);
-    if (!match) return [];
-    return [{ label, score: parseInt(match[1]) }];
+    return match ? [{ label, score: parseInt(match[1]) }] : [];
   });
 }
 
@@ -59,43 +50,36 @@ function parseOneLiner(text: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-// KEY INSIGHTS 이후 전체 원문 추출 (DIMENSION SCORES 섹션 제외)
+// KEY INSIGHTS 이후 원문 추출 (Dimension Scores 블록 제외)
 function extractNarrativeSections(text: string): string {
-  const keyInsightsIdx = text.search(/##\s*KEY INSIGHTS/i);
-  if (keyInsightsIdx === -1) {
-    // fallback: DIMENSION SCORES 이후부터
-    const dimIdx = text.search(/##\s*DIMENSION SCORES/i);
-    if (dimIdx === -1) return text;
-    const afterDim = text.slice(dimIdx);
-    const nextSection = afterDim.search(/\n##\s/);
-    return nextSection === -1 ? '' : afterDim.slice(nextSection).trim();
+  const idx = text.search(/##\s*KEY INSIGHTS/i);
+  if (idx !== -1) return text.slice(idx).trim();
+  // fallback: DIMENSION SCORES 다음 섹션부터
+  const dimIdx = text.search(/##\s*DIMENSION SCORES/i);
+  if (dimIdx !== -1) {
+    const after = text.slice(dimIdx);
+    const next = after.search(/\n##\s/);
+    return next === -1 ? '' : after.slice(next).trim();
   }
-  return text.slice(keyInsightsIdx).trim();
+  return '';
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+// ── Style maps ───────────────────────────────────────────────────────────
 
-const verdictConfig: Record<NonNullable<VerdictType>, { bg: string; border: string; badge: string; label: string; glow: string }> = {
+const verdictConfig: Record<NonNullable<VerdictType>, {
+  bg: string; border: string; badge: string; label: string; glow: string;
+}> = {
   GO: {
-    bg: 'bg-emerald-950/40',
-    border: 'border-emerald-500/50',
-    badge: 'bg-emerald-500 text-white',
-    label: 'GO ✅',
-    glow: 'shadow-emerald-500/10',
+    bg: 'bg-emerald-950/40', border: 'border-emerald-500/50',
+    badge: 'bg-emerald-500 text-white', label: 'GO ✅', glow: 'shadow-emerald-500/10',
   },
   'NO-GO': {
-    bg: 'bg-red-950/40',
-    border: 'border-red-500/50',
-    badge: 'bg-red-500 text-white',
-    label: 'NO-GO ❌',
-    glow: 'shadow-red-500/10',
+    bg: 'bg-red-950/40', border: 'border-red-500/50',
+    badge: 'bg-red-500 text-white', label: 'NO-GO ❌', glow: 'shadow-red-500/10',
   },
   CONDITIONAL: {
-    bg: 'bg-yellow-950/40',
-    border: 'border-yellow-500/50',
-    badge: 'bg-yellow-400 text-black',
-    label: 'CONDITIONAL GO ⚠️',
-    glow: 'shadow-yellow-500/10',
+    bg: 'bg-yellow-950/40', border: 'border-yellow-500/50',
+    badge: 'bg-yellow-400 text-black', label: 'CONDITIONAL GO ⚠️', glow: 'shadow-yellow-500/10',
   },
 };
 
@@ -105,22 +89,19 @@ function scoreColor(score: number) {
   return { bar: 'bg-red-500', text: 'text-red-400' };
 }
 
-// localStorage helpers
+// ── localStorage helpers ─────────────────────────────────────────────────
+
 const getUsageCount = () => parseInt(localStorage.getItem('decisible_usage_count') || '0');
 const incrementUsageCount = () => {
   localStorage.setItem('decisible_usage_count', String(getUsageCount() + 1));
 };
 const hasSubmittedEmail = () => !!localStorage.getItem('decisible_email_submitted');
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────
 
 export default function Analyze() {
   const [form, setForm] = useState<FormData>({
-    product: '',
-    category: '',
-    price: '',
-    market: 'US',
-    context: '',
+    product: '', category: '', price: '', market: 'US', context: '',
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -159,8 +140,7 @@ export default function Analyze() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const count = getUsageCount();
-    if (count >= 2 && !hasSubmittedEmail()) {
+    if (getUsageCount() >= 2 && !hasSubmittedEmail()) {
       setShowEmailGate(true);
       return;
     }
@@ -186,17 +166,17 @@ export default function Analyze() {
   const isValid = form.product.trim() && form.category.trim() && form.price.trim();
   const vcfg = verdict ? verdictConfig[verdict] : null;
 
-  // Parsed data
+  // Derived
   const dimensions = result ? parseDimensionScores(result) : [];
-  const overall = result ? parseOverallScore(result) : null;
+  const overall    = result ? parseOverallScore(result) : null;
   const confidence = result ? parseConfidence(result) : null;
-  const oneLiner = result ? parseOneLiner(result) : null;
+  const oneLiner   = result ? parseOneLiner(result) : null;
   const narrativeMd = result ? extractNarrativeSections(result) : '';
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
 
-      {/* Email Gate Modal */}
+      {/* ── Email Gate Modal ────────────────────────────────────────── */}
       {showEmailGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl">
@@ -208,7 +188,9 @@ export default function Analyze() {
             <h2 className="text-2xl font-black text-white text-center mb-2">Unlock Unlimited Analyses</h2>
             <p className="text-slate-400 text-center text-sm mb-6">Join 500+ Amazon sellers making smarter decisions</p>
             <div className="bg-slate-800/60 border border-slate-600 rounded-xl px-4 py-3 mb-6 text-center">
-              <p className="text-slate-300 text-sm">You've used your <span className="text-emerald-400 font-bold">2 free analyses</span></p>
+              <p className="text-slate-300 text-sm">
+                You've used your <span className="text-emerald-400 font-bold">2 free analyses</span>
+              </p>
               <p className="text-slate-500 text-xs mt-1">Enter your email to continue — it's free</p>
             </div>
             <form onSubmit={handleGateSubmit} className="flex flex-col gap-4">
@@ -225,7 +207,9 @@ export default function Analyze() {
                 disabled={gateSubmitting || !gateEmail.trim()}
                 className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition"
               >
-                {gateSubmitting ? <><Loader2 size={18} className="animate-spin" />Submitting...</> : 'Get Access →'}
+                {gateSubmitting
+                  ? <><Loader2 size={18} className="animate-spin" /> Submitting...</>
+                  : 'Get Access →'}
               </button>
             </form>
             <p className="text-slate-600 text-xs text-center mt-4">No spam. Unsubscribe anytime.</p>
@@ -233,7 +217,7 @@ export default function Analyze() {
         </div>
       )}
 
-      {/* Nav */}
+      {/* ── Nav ─────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 w-full z-40 bg-[#0F172A]/90 backdrop-blur border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-black tracking-tight">
@@ -241,7 +225,7 @@ export default function Analyze() {
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition">
-              <ChevronLeft size={16} />Home
+              <ChevronLeft size={16} /> Home
             </Link>
             <a href="/#waitlist" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-lg transition">
               Join Waitlist
@@ -252,41 +236,54 @@ export default function Analyze() {
 
       <div className="max-w-3xl mx-auto px-6 pt-32 pb-20">
 
-        {/* Header */}
+        {/* ── Header ──────────────────────────────────────────────── */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-semibold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             AI Launch Analyzer — Powered by Claude
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-4">
             Should You <span className="text-emerald-500">Launch It?</span>
           </h1>
-          <p className="text-slate-400 text-lg">Get a GO / NO-GO decision in 30 seconds — backed by 10-year MD expertise.</p>
+          <p className="text-slate-400 text-lg">
+            Get a GO / NO-GO decision in 30 seconds — backed by 10-year MD expertise.
+          </p>
         </div>
 
-        {/* Form */}
+        {/* ── Form ────────────────────────────────────────────────── */}
         <form onSubmit={handleSubmit} className="bg-[#1E293B] border border-slate-700 rounded-2xl p-8 mb-8">
           <div className="grid gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Product Idea <span className="text-emerald-400">*</span></label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Product Idea <span className="text-emerald-400">*</span>
+              </label>
               <input name="product" value={form.product} onChange={handleChange}
                 placeholder="e.g. Stainless steel insulated water bottle with straw lid"
-                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required />
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                required />
             </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Category <span className="text-emerald-400">*</span></label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Category <span className="text-emerald-400">*</span>
+                </label>
                 <input name="category" value={form.category} onChange={handleChange}
                   placeholder="e.g. Kitchen & Dining"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required />
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                  required />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Target Price ($) <span className="text-emerald-400">*</span></label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Target Price ($) <span className="text-emerald-400">*</span>
+                </label>
                 <input name="price" value={form.price} onChange={handleChange}
                   type="number" min="1" step="0.01" placeholder="e.g. 25"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required />
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                  required />
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">Market</label>
               <select name="market" value={form.market} onChange={handleChange}
@@ -297,20 +294,27 @@ export default function Analyze() {
                 <option value="Global">Global — Multi-market</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Additional Context <span className="text-slate-500 font-normal">(optional)</span></label>
-              <textarea name="context" value={form.context} onChange={handleChange} rows={3}
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Additional Context <span className="text-slate-500 font-normal">(optional)</span>
+              </label>
+              <textarea name="context" value={form.context} onChange={handleChange}
+                rows={3}
                 placeholder="e.g. Competitor ASIN: B08XYZ, avg BSR 12,000, my COGS is ~$7..."
                 className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition resize-none" />
             </div>
+
             <button type="submit" disabled={!isValid || loading}
               className="flex items-center justify-center gap-3 w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition text-lg">
-              {loading ? <><Loader2 size={20} className="animate-spin" />Analyzing with AI...</> : <><ArrowRight size={20} />Analyze Now</>}
+              {loading
+                ? <><Loader2 size={20} className="animate-spin" /> Analyzing with AI...</>
+                : <><ArrowRight size={20} /> Analyze Now</>}
             </button>
           </div>
         </form>
 
-        {/* Error */}
+        {/* ── Error ───────────────────────────────────────────────── */}
         {error && (
           <div className="bg-red-950/60 border border-red-500/40 rounded-2xl p-6 mb-8 text-red-300">
             <p className="font-semibold mb-1">Analysis Failed</p>
@@ -318,7 +322,7 @@ export default function Analyze() {
           </div>
         )}
 
-        {/* ─── Result ─────────────────────────────────────────────── */}
+        {/* ── Result ──────────────────────────────────────────────── */}
         {result && vcfg && (
           <div className={`rounded-2xl border shadow-xl ${vcfg.bg} ${vcfg.border} ${vcfg.glow} p-8 space-y-6`}>
 
@@ -341,7 +345,7 @@ export default function Analyze() {
               </p>
             )}
 
-            {/* ── Dimension Scores ───────────────────── */}
+            {/* Dimension Scores */}
             {dimensions.length > 0 && (
               <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-5">
                 <h3 className="text-white font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -368,12 +372,14 @@ export default function Analyze() {
                   })}
                 </div>
 
-                {/* Overall Score gauge */}
+                {/* Overall gauge */}
                 {overall !== null && (
                   <div className="mt-5 pt-5 border-t border-slate-700">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-slate-300 text-sm font-semibold">Overall Score</span>
-                      <span className="text-2xl font-black text-white">{overall}<span className="text-slate-500 text-sm font-normal">/50</span></span>
+                      <span className="text-2xl font-black text-white">
+                        {overall}<span className="text-slate-500 text-sm font-normal">/50</span>
+                      </span>
                     </div>
                     <div className="w-full bg-slate-700/60 rounded-full h-3">
                       <div
@@ -389,28 +395,29 @@ export default function Analyze() {
               </div>
             )}
 
-            {/* ── Narrative (Key Insights / Risks / Action Plan) ── */}
+            {/* Narrative sections via ReactMarkdown */}
             {narrativeMd && (
-              <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-6">
-                <div className="
-                  prose prose-invert max-w-none text-sm
-                  prose-h2:text-white prose-h2:font-black prose-h2:text-base prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-700 first:prose-h2:mt-0
-                  prose-h3:text-emerald-400 prose-h3:font-bold prose-h3:text-sm prose-h3:mt-4 prose-h3:mb-2
-                  prose-strong:text-white
-                  prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-2
-                  prose-li:text-slate-300 prose-li:leading-relaxed prose-li:my-1
-                  prose-ul:my-2 prose-ol:my-2
-                  prose-hr:border-slate-700 prose-hr:my-4
-                ">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{narrativeMd}</ReactMarkdown>
-                </div>
+              <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-5
+                prose prose-invert max-w-none
+                prose-h2:text-white prose-h2:font-black prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h2:border-b prose-h2:border-slate-700 prose-h2:pb-2
+                prose-h3:text-emerald-400 prose-h3:font-bold prose-h3:text-sm
+                prose-strong:text-white
+                prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-sm
+                prose-li:text-slate-300 prose-li:text-sm prose-li:leading-relaxed
+                prose-hr:border-slate-700">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {narrativeMd}
+                </ReactMarkdown>
               </div>
             )}
 
             {/* CTA */}
             <div className="pt-4 border-t border-slate-700/50 flex flex-col sm:flex-row items-center gap-4">
-              <p className="text-slate-400 text-sm flex-1">Want unlimited analyses + PDF export + competitor comparison?</p>
-              <Link to="/#pricing" className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition text-sm whitespace-nowrap">
+              <p className="text-slate-400 text-sm flex-1">
+                Want unlimited analyses + PDF export + competitor comparison?
+              </p>
+              <Link to="/#pricing"
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition text-sm whitespace-nowrap">
                 Get Full Access →
               </Link>
             </div>
