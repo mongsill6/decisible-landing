@@ -266,6 +266,65 @@ export default function App() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section id="pricing" className="py-24 px-6 bg-slate-950/60">
+        <div className="max-w-md mx-auto text-center">
+          <p className="text-emerald-500 text-sm font-bold uppercase tracking-widest mb-3">Pricing</p>
+          <h2 className="text-4xl font-black text-white mb-4">
+            Early Bird <span className="text-emerald-500">Pricing</span>
+          </h2>
+          <p className="text-slate-400 mb-10 text-lg">Lock in the lowest price before we launch.</p>
+
+          <div className="bg-[#1E293B] border border-emerald-500/40 rounded-2xl p-8 relative">
+            {/* Badge */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+              <span className="px-4 py-1.5 bg-emerald-500 text-white text-xs font-black rounded-full tracking-wider uppercase">
+                First 50 Subscribers Only
+              </span>
+            </div>
+
+            {/* Features */}
+            <ul className="text-left space-y-3 mb-8 mt-2">
+              {[
+                'Unlimited GO/NO-GO analyses',
+                '5-dimension AI scoring',
+                'Export results',
+                'Priority support',
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-3 text-slate-300">
+                  <span className="text-emerald-400 text-lg">✅</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Price */}
+            <div className="flex items-end justify-center gap-3 mb-2">
+              <span className="text-5xl font-black text-white">$29</span>
+              <div className="flex flex-col items-start pb-1">
+                <span className="text-slate-500 line-through text-lg">$49</span>
+                <span className="text-slate-400 text-sm">/month</span>
+              </div>
+            </div>
+            <p className="text-emerald-400 text-sm font-semibold mb-8">Save $20/mo — Early bird deal</p>
+
+            {/* CTA Button */}
+            <a
+              href="https://buy.polar.sh/polar_cl_HlU6DvfvjSMfEfKmZ2nNL02UkTC6Bq7xIq1eP2rtilU"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-xl transition text-lg"
+            >
+              Start Now — $29/mo →
+            </a>
+
+            <p className="text-slate-500 text-xs mt-4">
+              30-day money-back guarantee · Cancel anytime
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
