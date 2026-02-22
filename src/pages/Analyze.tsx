@@ -410,14 +410,14 @@ export default function Analyze() {
 
             {/* ── Risks ──────────────────────────────── */}
             {risks.length > 0 && (
-              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-orange-500 rounded-xl p-5">
-                <h3 className="text-orange-400 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-slate-500 rounded-xl p-5">
+                <h3 className="text-slate-300 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                   <AlertTriangle size={16} />Risks to Watch
                 </h3>
                 <ul className="space-y-2.5">
                   {risks.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-slate-300 text-sm leading-relaxed">
-                      <span className="text-orange-400 mt-0.5 shrink-0">⚠</span>
+                    <li key={i} className="flex gap-3 text-slate-400 text-sm leading-relaxed">
+                      <span className="text-slate-500 mt-0.5 shrink-0">—</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -427,14 +427,14 @@ export default function Analyze() {
 
             {/* ── Action Plan ────────────────────────── */}
             {actionPlan.length > 0 && (
-              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-blue-500 rounded-xl p-5">
-                <h3 className="text-blue-400 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-emerald-500 rounded-xl p-5">
+                <h3 className="text-emerald-400 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Rocket size={16} />90-Day Action Plan
                 </h3>
                 <ol className="space-y-2.5">
                   {actionPlan.map((item, i) => (
                     <li key={i} className="flex gap-3 text-slate-300 text-sm leading-relaxed">
-                      <span className="text-blue-400 font-bold mt-0.5 shrink-0">{i + 1}.</span>
+                      <span className="text-emerald-400 font-bold mt-0.5 shrink-0">{i + 1}.</span>
                       <span>{item}</span>
                     </li>
                   ))}
