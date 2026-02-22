@@ -50,18 +50,24 @@ function parseOneLiner(text: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-// KEY INSIGHTS 이후 원문 추출 (Dimension Scores 블록 제외)
-function extractNarrativeSections(text: string): string {
-  const idx = text.search(/##\s*KEY INSIGHTS/i);
-  if (idx !== -1) return text.slice(idx).trim();
-  // fallback: DIMENSION SCORES 다음 섹션부터
-  const dimIdx = text.search(/##\s*DIMENSION SCORES/i);
-  if (dimIdx !== -1) {
-    const after = text.slice(dimIdx);
-    const next = after.search(/\n##\s/);
-    return next === -1 ? '' : after.slice(next).trim();
+// ## 헤더 기준으로 섹션 분리 (VERDICT, DIMENSION SCORES 제외)
+interface Section { title: string; body: string; }
+function parseSections(text: string): Section[] {
+  const lines = text.split('\n');
+  const sections: Section[] = [];
+  let cur: Section | null = null;
+  for (const line of lines) {
+    if (/^##\s/.test(line)) {
+      if (cur && cur.body.trim()) sections.push({ ...cur, body: cur.body.trim() });
+      const title = line.replace(/^##\s+/, '').replace(/[✅❌⚠️]/g, '').replace(/^VERDICT.*$/i, '').trim();
+      if (/VERDICT|DIMENSION SCORES/i.test(title)) { cur = null; continue; }
+      cur = { title, body: '' };
+    } else if (cur) {
+      cur.body += line + '\n';
+    }
   }
-  return '';
+  if (cur && cur.body.trim()) sections.push({ ...cur, body: cur.body.trim() });
+  return sections;
 }
 
 // ── Style maps ───────────────────────────────────────────────────────────
@@ -171,7 +177,7 @@ export default function Analyze() {
   const overall    = result ? parseOverallScore(result) : null;
   const confidence = result ? parseConfidence(result) : null;
   const oneLiner   = result ? parseOneLiner(result) : null;
-  const narrativeMd = result ? extractNarrativeSections(result) : '';
+  const sections    = result ? parseSections(result) : [];
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
@@ -395,21 +401,20 @@ export default function Analyze() {
               </div>
             )}
 
-            {/* Narrative sections via ReactMarkdown */}
-            {narrativeMd && (
-              <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-5
-                prose prose-invert max-w-none
-                prose-h2:text-white prose-h2:font-black prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h2:border-b prose-h2:border-slate-700 prose-h2:pb-2
-                prose-h3:text-emerald-400 prose-h3:font-bold prose-h3:text-sm
-                prose-strong:text-white
-                prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-sm
-                prose-li:text-slate-300 prose-li:text-sm prose-li:leading-relaxed
-                prose-hr:border-slate-700">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {narrativeMd}
-                </ReactMarkdown>
+            {/* Sections — each ## gets its own card */}
+            {sections.map((sec, i) => (
+              <div key={i} className="bg-[#1E293B] border border-slate-700 rounded-xl p-5">
+                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest mb-3 border-b border-slate-700 pb-3">{sec.title}</p>
+                <div className="prose prose-invert max-w-none text-sm
+                  prose-strong:text-white
+                  prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-1.5
+                  prose-li:text-slate-300 prose-li:leading-relaxed prose-li:my-1
+                  prose-ul:my-2 prose-ol:my-2 prose-ul:pl-4 prose-ol:pl-4
+                  prose-h3:text-slate-200 prose-h3:font-bold prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{sec.body}</ReactMarkdown>
+                </div>
               </div>
-            )}
+            ))}
 
             {/* CTA */}
             <div className="pt-4 border-t border-slate-700/50 flex flex-col sm:flex-row items-center gap-4">
