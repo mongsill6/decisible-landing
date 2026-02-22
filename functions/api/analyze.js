@@ -133,7 +133,7 @@ ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-latest',
         max_tokens: 1500,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
@@ -145,8 +145,9 @@ ${extraContext ? `Additional Context: ${extraContext}` : ''}`;
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error('Anthropic API error:', response.status, errText);
       return Response.json(
-        { error: `Analysis service error (${response.status}). Please try again.` },
+        { error: `Analysis service error (${response.status}). Please try again.`, detail: errText },
         { status: 502, headers }
       );
     }
