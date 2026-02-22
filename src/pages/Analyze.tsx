@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Loader2, ArrowRight, ChevronLeft, Mail, TrendingUp, AlertTriangle, Lightbulb, Rocket } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Loader2, ArrowRight, ChevronLeft, Mail, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface FormData {
@@ -57,20 +59,18 @@ function parseOneLiner(text: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-function extractSection(text: string, heading: string): string {
-  const headingPattern = new RegExp(`##\\s*${heading}[^\\n]*\\n`, 'i');
-  const start = text.search(headingPattern);
-  if (start === -1) return '';
-  const afterHeading = text.slice(start).replace(headingPattern, '');
-  const nextSection = afterHeading.search(/^##\s/m);
-  return (nextSection === -1 ? afterHeading : afterHeading.slice(0, nextSection)).trim();
-}
-
-function parseListItems(text: string): string[] {
-  return text
-    .split('\n')
-    .map(l => l.replace(/^[-*•]\s*/, '').replace(/\*\*/g, '').trim())
-    .filter(l => l.length > 0);
+// KEY INSIGHTS 이후 전체 원문 추출 (DIMENSION SCORES 섹션 제외)
+function extractNarrativeSections(text: string): string {
+  const keyInsightsIdx = text.search(/##\s*KEY INSIGHTS/i);
+  if (keyInsightsIdx === -1) {
+    // fallback: DIMENSION SCORES 이후부터
+    const dimIdx = text.search(/##\s*DIMENSION SCORES/i);
+    if (dimIdx === -1) return text;
+    const afterDim = text.slice(dimIdx);
+    const nextSection = afterDim.search(/\n##\s/);
+    return nextSection === -1 ? '' : afterDim.slice(nextSection).trim();
+  }
+  return text.slice(keyInsightsIdx).trim();
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
@@ -191,9 +191,7 @@ export default function Analyze() {
   const overall = result ? parseOverallScore(result) : null;
   const confidence = result ? parseConfidence(result) : null;
   const oneLiner = result ? parseOneLiner(result) : null;
-  const keyInsights = result ? parseListItems(extractSection(result, 'KEY INSIGHTS')) : [];
-  const risks = result ? parseListItems(extractSection(result, 'RISKS TO WATCH')) : [];
-  const actionPlan = result ? parseListItems(extractSection(result, 'IF YOU GO[^\\n]*')) : [];
+  const narrativeMd = result ? extractNarrativeSections(result) : '';
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
@@ -391,54 +389,21 @@ export default function Analyze() {
               </div>
             )}
 
-            {/* ── Key Insights ───────────────────────── */}
-            {keyInsights.length > 0 && (
-              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-emerald-500 rounded-xl p-5">
-                <h3 className="text-emerald-400 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Lightbulb size={16} />Key Insights
-                </h3>
-                <ul className="space-y-2.5">
-                  {keyInsights.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-slate-300 text-sm leading-relaxed">
-                      <span className="text-emerald-400 mt-0.5 shrink-0">•</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* ── Risks ──────────────────────────────── */}
-            {risks.length > 0 && (
-              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-slate-500 rounded-xl p-5">
-                <h3 className="text-slate-300 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <AlertTriangle size={16} />Risks to Watch
-                </h3>
-                <ul className="space-y-2.5">
-                  {risks.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-slate-400 text-sm leading-relaxed">
-                      <span className="text-slate-500 mt-0.5 shrink-0">—</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* ── Action Plan ────────────────────────── */}
-            {actionPlan.length > 0 && (
-              <div className="bg-[#1E293B] border border-slate-700 border-l-4 border-l-emerald-500 rounded-xl p-5">
-                <h3 className="text-emerald-400 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Rocket size={16} />90-Day Action Plan
-                </h3>
-                <ol className="space-y-2.5">
-                  {actionPlan.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-slate-300 text-sm leading-relaxed">
-                      <span className="text-emerald-400 font-bold mt-0.5 shrink-0">{i + 1}.</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ol>
+            {/* ── Narrative (Key Insights / Risks / Action Plan) ── */}
+            {narrativeMd && (
+              <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-6">
+                <div className="
+                  prose prose-invert max-w-none text-sm
+                  prose-h2:text-white prose-h2:font-black prose-h2:text-base prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-700 first:prose-h2:mt-0
+                  prose-h3:text-emerald-400 prose-h3:font-bold prose-h3:text-sm prose-h3:mt-4 prose-h3:mb-2
+                  prose-strong:text-white
+                  prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-2
+                  prose-li:text-slate-300 prose-li:leading-relaxed prose-li:my-1
+                  prose-ul:my-2 prose-ol:my-2
+                  prose-hr:border-slate-700 prose-hr:my-4
+                ">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{narrativeMd}</ReactMarkdown>
+                </div>
               </div>
             )}
 
