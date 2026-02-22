@@ -50,24 +50,19 @@ function parseOneLiner(text: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-// ## 헤더 기준으로 섹션 분리 (VERDICT, DIMENSION SCORES 제외)
-interface Section { title: string; body: string; }
-function parseSections(text: string): Section[] {
-  const lines = text.split('\n');
-  const sections: Section[] = [];
-  let cur: Section | null = null;
-  for (const line of lines) {
-    if (/^##\s/.test(line)) {
-      if (cur && cur.body.trim()) sections.push({ ...cur, body: cur.body.trim() });
-      const title = line.replace(/^##\s+/, '').replace(/[✅❌⚠️]/g, '').replace(/^VERDICT.*$/i, '').trim();
-      if (/VERDICT|DIMENSION SCORES/i.test(title)) { cur = null; continue; }
-      cur = { title, body: '' };
-    } else if (cur) {
-      cur.body += line + '\n';
-    }
+// VERDICT + DIMENSION SCORES 블록 제거 후 나머지 반환
+function extractBody(text: string): string {
+  // KEY INSIGHTS 또는 RISKS 또는 IF YOU GO 시작 지점부터
+  const idx = text.search(/\n#{1,3}\s*(KEY INSIGHTS|RISKS|IF YOU GO)/i);
+  if (idx !== -1) return text.slice(idx).trim();
+  // fallback: DIMENSION SCORES 다음 ## 섹션부터
+  const dimIdx = text.search(/#{1,3}\s*DIMENSION SCORES/i);
+  if (dimIdx !== -1) {
+    const after = text.slice(dimIdx);
+    const next = after.search(/\n#{1,3}\s(?!DIMENSION)/i);
+    if (next !== -1) return after.slice(next).trim();
   }
-  if (cur && cur.body.trim()) sections.push({ ...cur, body: cur.body.trim() });
-  return sections;
+  return text;
 }
 
 // ── Style maps ───────────────────────────────────────────────────────────
@@ -177,7 +172,7 @@ export default function Analyze() {
   const overall    = result ? parseOverallScore(result) : null;
   const confidence = result ? parseConfidence(result) : null;
   const oneLiner   = result ? parseOneLiner(result) : null;
-  const sections    = result ? parseSections(result) : [];
+  const body        = result ? extractBody(result) : '';
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC]">
@@ -401,20 +396,23 @@ export default function Analyze() {
               </div>
             )}
 
-            {/* Sections — each ## gets its own card */}
-            {sections.map((sec, i) => (
-              <div key={i} className="bg-[#1E293B] border border-slate-700 rounded-xl p-5">
-                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest mb-3 border-b border-slate-700 pb-3">{sec.title}</p>
+            {/* Body — clean prose render */}
+            {body && (
+              <div className="bg-[#1E293B] border border-slate-700 rounded-xl p-6">
                 <div className="prose prose-invert max-w-none text-sm
+                  prose-h1:text-emerald-400 prose-h1:font-black prose-h1:text-sm prose-h1:uppercase prose-h1:tracking-widest prose-h1:mt-6 prose-h1:mb-3 prose-h1:pb-2 prose-h1:border-b prose-h1:border-slate-700
+                  prose-h2:text-emerald-400 prose-h2:font-black prose-h2:text-sm prose-h2:uppercase prose-h2:tracking-widest prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-700
+                  prose-h3:text-slate-200 prose-h3:font-bold prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
                   prose-strong:text-white
-                  prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-1.5
+                  prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-2
                   prose-li:text-slate-300 prose-li:leading-relaxed prose-li:my-1
-                  prose-ul:my-2 prose-ol:my-2 prose-ul:pl-4 prose-ol:pl-4
-                  prose-h3:text-slate-200 prose-h3:font-bold prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{sec.body}</ReactMarkdown>
+                  prose-ul:my-2 prose-ol:my-2
+                  prose-hr:border-slate-600 prose-hr:my-4
+                  first:prose-h2:mt-0 first:prose-h1:mt-0">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
                 </div>
               </div>
-            ))}
+            )}
 
             {/* CTA */}
             <div className="pt-4 border-t border-slate-700/50 flex flex-col sm:flex-row items-center gap-4">
